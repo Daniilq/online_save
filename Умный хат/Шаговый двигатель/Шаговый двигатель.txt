@@ -1,0 +1,99 @@
+3333333333333333333333333333
+
+int in1 = 5;
+int in2 = 4;
+int in3 = 3;
+int in4 = 2;
+const int dl = 5;
+
+void setup() {
+    pinMode(in1, OUTPUT);
+    pinMode(in2, OUTPUT);
+    pinMode(in3, OUTPUT);
+    pinMode(in4, OUTPUT);
+}
+
+void loop() {
+    digitalWrite( in1, HIGH ); 
+    digitalWrite( in2, HIGH ); 
+    digitalWrite( in3, LOW ); 
+    digitalWrite( in4, LOW );
+    delay(dl);
+
+    digitalWrite( in1, LOW ); 
+    digitalWrite( in2, HIGH ); 
+    digitalWrite( in3, HIGH ); 
+    digitalWrite( in4, LOW );
+    delay(dl);
+
+    digitalWrite( in1, LOW ); 
+    digitalWrite( in2, LOW ); 
+    digitalWrite( in3, HIGH ); 
+    digitalWrite( in4, HIGH );
+    delay(dl);
+
+    digitalWrite( in1, HIGH ); 
+    digitalWrite( in2, LOW ); 
+    digitalWrite( in3, LOW ); 
+    digitalWrite( in4, HIGH );
+    delay(dl);
+}
+
+
+22222222222222222222222222222222222222
+
+#include <Stepper.h>
+
+const int IN1 = 2;
+const int IN2 = 3;
+const int IN3 = 4;
+const int IN4 = 5;
+
+const int stepsPerRevolution = 32; // шагов за один оборот
+
+Stepper myStepper(stepsPerRevolution, IN1, IN2, IN3, IN4); 
+
+void setup() {
+  myStepper.setSpeed(5); // скорость 5 об/минуту
+}
+
+void loop() {
+  myStepper.step(stepsPerRevolution); // 32 шага в одном направлении
+  delay(500);
+ 
+  Serial.println("counterclockwise");
+  myStepper.step(-stepsPerRevolution); // 32 шага в обратную сторону
+  delay(500); 
+}
+
+ 1111111111111111111111111111
+
+#include <Stepper.h>
+
+const int stepsPerRevolution = 200;
+
+Stepper myStepper(stepsPerRevolution, 8,9,10,11); //подключение к пинам 8…11 на Ардуино
+
+void setup() {
+
+myStepper.setSpeed(60); //установка скорости вращения ротора
+
+Serial.begin(9600);
+
+}
+
+void loop() {
+
+//Функция ожидает, пока поступит команда, преобразовывает текст и подает сигнал на двигатель для его вращения на указанное число шагов.
+
+Serial.println("Move right"); //по часовой стрелке
+
+myStepper.step(stepsPerRevolution);
+
+delay(1000);
+
+Serial.println("Move left"); //против часовой стрелки
+
+myStepper.step(-stepsPerRevolution);
+
+delay(1000);

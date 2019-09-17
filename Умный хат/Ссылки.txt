@@ -1,0 +1,4 @@
+http://allaboutee.com/2014/12/30/esp8266-and-arduino-webserver/          Код Arduino WebServer / Эскиз для ESP8266
+https://forum.arduino.ua/viewtopic.php?id=1161 		    форум о библиотеках 
+https://github.com/arendst/Sonoff-Tasmota			    
+https://www.youtube.com/watch?v=eB91JjMIZlM		    ESP8266. Управляем освещением по WIFI

@@ -1,0 +1,13 @@
+const int analogPin = 0;
+
+void setup() {
+  Serial.begin(9600);   // Скорость работы порта
+  Serial.println("Analog Sensor Test"); // Выводим текст
+  Serial.println();                             // Пустая строка 
+}
+
+void loop() {
+  int analogValue = analogRead(analogPin);  // Задаем переменную analogValue для считывания показаний  
+  Serial.println(analogValue);              // Выводим значения
+  delay(500);
+}

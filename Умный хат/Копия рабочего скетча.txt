@@ -1,0 +1,101 @@
+#include "IRremote.h"
+#include "Stepper.h"
+
+//                              ИК ПРИЕМНИК
+
+IRrecv irrecv(8); // указываем вывод, к которому подключен приемник
+decode_results results;
+
+//                              РЕЛЕ
+
+#define PIN_RELAY 9
+
+//                              ШАГОВЫЙ ДВИГАТЕЛЬ
+
+const int stepsPerRevolution = 60;
+
+Stepper myStepper(stepsPerRevolution, 5,4,3,2); //подключение к пинам 8…11 на Ардуино
+
+
+void setup() {
+  
+Serial.begin(9600); // Выставляем скорость COM порта
+irrecv.enableIRIn(); // запускаем прием
+
+    pinMode(PIN_RELAY, OUTPUT); // Объявляем пин реле как выход
+
+    myStepper.setSpeed(70); //установка скорости вращения ротора
+
+    
+  digitalWrite(PIN_RELAY, HIGH); // Выключаем реле - посылаем высокий сигнал
+
+//          РЕЛЕ
+}
+void open_()
+{
+  digitalWrite(PIN_RELAY, LOW); // Включаем реле - посылаем высокий сигнал
+  }
+
+void close_()
+{
+  digitalWrite(PIN_RELAY, HIGH);
+  }
+  
+//          ШАГОВЫЙ ДВИГАТЕЛЬ
+void open_r()
+{
+
+  myStepper.step(-stepsPerRevolution); //по часовой стрелке
+   delay(70);
+  }
+  
+void close_r()
+{
+  myStepper.step(stepsPerRevolution);//против часовой стрелки
+    delay(70);
+  }
+  
+void loop() {
+if ( irrecv.decode( &results )) {
+  switch ( results.value ) 
+  {
+ //  ТЕЛЕФОННОЕ УПРАВЛЕНИЕ (РЕЛЕ)
+   case 1595074756: //КАНАЛ ВВЕРХ
+   open_();
+   break;
+     
+   case 412973352: //КАНАЛ ВНИЗ
+   close_();
+   break;
+ //  УПРАВЛЕНИЕ С ПУЛЬТА (РЕЛЕ)
+   case 16718055: //2
+   open_();
+   break;
+     
+   case 16726215: //5
+   close_();
+   break;
+   
+ //  ТЕЛЕФОННОЕ УПРАВЛЕНИЕ (ЖАЛЮЗИ)
+   case 1752382022: // ГРОМКОСТЬ ВВЕРХ
+   open_r();
+   break;
+     
+   case 2209452902: // ГРОМКОСТЬ ВНИЗ
+   close_r();
+   break;
+   
+ //  УПРАВЛЕНИЕ С ПУЛЬТА (ЖАЛЮЗИ)
+   case 16724175: //1
+   open_r();
+   break;
+     
+   case 16716015: //4
+   close_r();
+   break;
+    }
+    Serial.println(results.value, HEX); // Отправляем полученную данную в консоль 
+    Serial.println( results.value); // печатаем данные   
+    irrecv.resume(); // принимаем следующую команду
+}
+}
