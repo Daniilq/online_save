@@ -26,21 +26,46 @@ static int16_t _line_check_analizer;
 static int16_t sensor[11]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static int16_t lineVectorVal = 0;
 
-static inline void lineCheck(int _sens_type = 1){
-	if(_sens_type == 1){  // digital
-	    for(int i=0; i<11; i++){
-	        sensor[i] = digitalRead(STRT_SENS_PIN+i);
+#include <EEPROM.h>
+#define ANALOG_SENS_PIN 54      // пин первого сенсора
+#define TOTAL_SENSORS 11        // всего сенсоров
+int16_t black_color_val = 200;  // значение черного цвета
+int16_t white_color_val = 600;  // значение белого цвета
+int16_t sensor_a[TOTAL_SENSORS]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // массив с аналоговыми значениями
+int16_t sensor_correction[TOTAL_SENSORS]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // массив со значениями коррекции датчиков, для выравнивания их значений между собой
+int16_t light_correction = 0;   // поправка на освещенность
+int16_t left_sens_val = 0;      // переменная для накопления значения левой ошибки
+int16_t right_sens_val = 0;     // переменная для накопления значения правой ошибки
+int8_t convers_oper_flag = 0;   // флаг операции преобразования
+static inline int32_t lineCheck(int _sens_type = 0){
+	left_sens_val = 0;
+	right_sens_val = 0;
+	convers_oper_flag = 0;
+	if(_sens_type == 0){            // analog
+		for(int i=0; i<TOTAL_SENSORS; i++){
+	        sensor_a[i] = analogRead(ANALOG_SENS_PIN+i);
+	        if(sensor_a[i] < black_color_val){black_color_val = sensor_a[i];}
+	        if(sensor_a[i] > white_color_val){white_color_val = sensor_a[i];}
 	        Serial.print(String(sensor[i]) + ",");
 	    }
-	    // sensor[0] = digitalRead(43);
-	    // sensor[2] = digitalRead(45);
-	    // sensor[4] = digitalRead(47);
+	    Serial.print("   ");
+	    for(int i=0; i<TOTAL_SENSORS; i++){
+	        if((sensor_a[i] <= (black_color_val + (white_color_val - black_color_val) / 4)) && )
+	        Serial.print(String(sensor[i]) + ",");
+	    }
 	    Serial.print("   ");
 	}
-	else{            // analog
-
-	}
+	// else if(_sens_type == 1){  // digital
+	//     for(int i=0; i<TOTAL_SENSORS; i++){
+	//         sensor[i] = digitalRead(STRT_SENS_PIN+i);
+	//         Serial.print(String(sensor[i]) + ",");
+	//     }
+	//     Serial.print("   ");
+	// }
+	lineVectorVal = left_sens_val - right_sens_val;
+	return lineVectorVal;
 }
+
 static int32_t lineCheckAnalizer1(){ 
 	if(sensor[3] == 0 && sensor[5] > 0 && sensor[7] == 0){lineVectorVal = 0;}  // центр
 	else if(sensor[3] > 0 && sensor[5] > 0 && sensor[7] > 0){lineVectorVal = 0;}  // центр центр
