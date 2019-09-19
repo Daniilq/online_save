@@ -10,7 +10,8 @@ Servo servo;
 #define PWM_PIN 8
 #define MOTORIN1_PIN 7
 #define MOTORIN2_PIN 6
-#define STRT_SENS_PIN 40
+#define DIGITAL_SENS_PIN 40
+#define ANALOG_SENS_PIN 54
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -29,7 +30,7 @@ static int16_t lineVectorVal = 0;
 static inline void lineCheck(int _sens_type = 1){
 	if(_sens_type == 1){  // digital
 	    for(int i=0; i<11; i++){
-	        sensor[i] = digitalRead(STRT_SENS_PIN+i);
+	        sensor[i] = digitalRead(DIGITAL_SENS_PIN+i);
 	        Serial.print(String(sensor[i]) + ",");
 	    }
 	    // sensor[0] = digitalRead(43);
@@ -59,6 +60,40 @@ static int32_t lineCheckAnalizer1(){
 	Serial.print(lineVectorVal);
 
 	return lineVectorVal;
+}
+
+static int32_t lineCheckAnalizerMaxim(){
+ 	int16_t _left = 0;
+ 	int16_t _right = 0;
+ 	int32_t _lineVectorValMaxim = 0;
+ 	for(int i=0; i<11; i++){
+ 	    if(sensor[i] == 1 && i <= 5 ){ _left ++; }
+		if(sensor[i] == 1 && i >= 5 && i <=11 ){  _right ++; }
+ 	}
+	_lineVectorValMaxim = _right -  _left ;
+	Serial.print("   ");
+	Serial.print(_lineVectorValMaxim);
+	Serial.print("   ");
+	return _lineVectorValMaxim;
+}
+static int32_t lineCheckAnalizerSS(){
+ 	int16_t _left = 0;
+ 	int16_t _right = 0;
+ 	int32_t _lineVectorValSS = 0;
+ 	for(int i=0; i<11; i++){
+ 		if(sensor[i] == 0 ){_left ++;}
+ 		else {break;}
+ 	}
+ 	for(int i=10; i>=0; i--){
+ 		if(sensor[i] == 0 ){_right ++;}
+ 		else {break;}	
+ 	}
+
+	_lineVectorValSS = _left - _right;
+	Serial.print("   ");
+	Serial.print(_lineVectorValSS);
+	Serial.print("   ");
+	return _lineVectorValSS;
 }
 
 
@@ -132,4 +167,6 @@ void setup(){
 void loop(){
 
 	generalDriver();
+	lineCheckAnalizerMaxim();
+	lineCheckAnalizerSS();
 }
