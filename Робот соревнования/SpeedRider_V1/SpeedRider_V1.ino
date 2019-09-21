@@ -11,7 +11,7 @@ Servo servo;
 #define MOTORIN1_PIN 7
 #define MOTORIN2_PIN 6
 #define DIGITAL_SENS_PIN 40
-#define ANALOG_SENS_PIN 64      // пин первого сенсора
+#define ANALOG_SENS_PIN 54      // пин первого сенсора
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -49,10 +49,13 @@ static int16_t lineVectorVal = 0;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int16_t white_color_val = 46;  // значение черного цвета
+int16_t white_color_val = 70;  // значение черного цвета
 int16_t black_color_val = 1000;  // значение белого цвета
 int16_t sensor_a[TOTAL_SENSORS]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // массив с аналоговыми значениями
-int16_t sensor_correction[TOTAL_SENSORS]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // массив со значениями коррекции датчиков, для выравнивания их значений между собой
+int16_t sensor_correction[TOTAL_SENSORS]={1, 1, 3, 2, 2, 3, -3, 1, 0, -8, -2};  // массив со значениями коррекции датчиков, для выравнивания их значений между собой
+
+// 25,25,23,24,24,23,29,24,25,34,28,
+
 int16_t light_correction = 0;   // поправка на освещенность
 int16_t left_sens_val = 0;      // переменная для накопления значения левой ошибки
 int16_t right_sens_val = 0;     // переменная для накопления значения правой ошибки
@@ -61,19 +64,42 @@ static inline int32_t lineCheck(int _sens_type = 0){
 	left_sens_val = 0;
 	right_sens_val = 0;
 	convers_oper_flag = 0;
+	white_color_val = 1023;  // значение черного цвета
+	black_color_val = 0;  // значение белого цвета
 	if(_sens_type == 0){            // analog
 		for(int i=0; i<TOTAL_SENSORS; i++){
-	        sensor_a[i] = analogRead(ANALOG_SENS_PIN+i);
+	        // sensor_a[i] = analogRead(ANALOG_SENS_PIN + i);
+	        sensor_a[i] = analogRead(ANALOG_SENS_PIN + i) + sensor_correction[i];
 	        if(sensor_a[i] < white_color_val){white_color_val = sensor_a[i];}
 	        if(sensor_a[i] > black_color_val){black_color_val = sensor_a[i];}
-	        Serial.print(String(sensor[i]) + ",");
+	        Serial.print(String(sensor_a[i]) + ",");
 	    }
 	    Serial.print("   ");
+	    Serial.print("b ");
+	    Serial.print(black_color_val);
+	    Serial.print("  ");
+	    Serial.print("w ");
+	    Serial.print(white_color_val);
+	    Serial.print("  ");
+
+
 	    for(int i=0; i<TOTAL_SENSORS; i++){
-	        if((sensor_a[i] <= (white_color_val + (black_color_val - white_color_val) / 4)) )
-	        Serial.print(String(sensor[i]) + ",");
+	        // if((sensor_a[i] >= (black_color_val - (black_color_val - white_color_val) / 4)) ){
+	        // 	sensor[i] = 1;
+	        // }
+	        // else{
+	        // 	sensor[i] = 0;
+	        // }
+
+	        if(sensor_a[i] >= (white_color_val * 5)){
+	        	sensor[i] = 1;
+	        }
+	        else{
+	        	sensor[i] = 0;
+	        }
+	        Serial.print(String(sensor[i]));
 	    }
-	    Serial.print("   ");
+	    Serial.println("!");
 	}
 	// else if(_sens_type == 1){  // digital
 	//     for(int i=0; i<TOTAL_SENSORS; i++){
@@ -83,6 +109,7 @@ static inline int32_t lineCheck(int _sens_type = 0){
 	//     Serial.print("   ");
 	// }
 	lineVectorVal = left_sens_val - right_sens_val;
+	    // delay(1000);
 	return lineVectorVal;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -206,7 +233,7 @@ void setup(){
 	pinMode(MOTORIN1_PIN, OUTPUT);
 	pinMode(MOTORIN2_PIN, OUTPUT);
 
-	Serial.begin(250000);
+	Serial.begin(115200);
 
 	servo.attach(SERVO_PIN);
 	delay(50);
@@ -215,7 +242,8 @@ void setup(){
 
 void loop(){
 
-	generalDriver();
-	lineCheckAnalizerMaxim();
-	lineCheckAnalizerSS();
+	// generalDriver();
+	// lineCheckAnalizerMaxim();
+	// lineCheckAnalizerSS();
+	lineCheck();
 }
