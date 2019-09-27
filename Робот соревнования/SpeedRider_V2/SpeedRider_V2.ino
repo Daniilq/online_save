@@ -16,7 +16,7 @@ Servo servo;
 
 
 #define SERVO_PIN 12
-#define ZERO_POS 85
+#define ZERO_POS 90
 #define MAX_SERVO_ANGLE 30
 #define MAX_MOTOR_SPEED 200
 #define MIN_MOTOR_SPEED 100
