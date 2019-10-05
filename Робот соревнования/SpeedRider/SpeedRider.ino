@@ -16,11 +16,11 @@ Servo servo;
 
 
 #define SERVO_PIN 12
-#define ZERO_POS 95				//среднее положение сервы
-#define MAX_SERVO_ANGLE 37		//максимальный кгол поворота 
+#define ZERO_POS 90				//среднее положение сервы
+#define MAX_SERVO_ANGLE 40		//максимальный кгол поворота 
 
-#define MIN_MOTOR_SPEED 170		// минимальная скорость 
-#define MAX_MOTOR_SPEED 190		// максимальная скорость 
+#define MIN_MOTOR_SPEED 120		// минимальная скорость 
+#define MAX_MOTOR_SPEED 200		// максимальная скорость 
 
 #define TOTAL_SENSORS 11        // всего сенсоров
 
@@ -34,7 +34,7 @@ static int16_t line_vector_val = 0;
 int16_t white_color_val = 70;  // значение черного цвета
 int16_t black_color_val = 1000;  // значение белого цвета
 uint16_t sensor_a[TOTAL_SENSORS]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // массив с аналоговыми значениями
-int16_t sensor_correction[TOTAL_SENSORS]={-3, -2, -4, -1, -2, -2, 0, -2, -2, -9, -1};  // массив со значениями коррекции датчиков, для выравнивания их значений между собой
+int16_t sensor_correction[TOTAL_SENSORS]={-3, -2, -11, -1, -2, -2, 0, -2, -2, -13, -1};  // массив со значениями коррекции датчиков, для выравнивания их значений между собой
 // 36,35,37,34,35,35,33,35,35,42,34,
 int16_t light_correction = 0;   // поправка на освещенность
 
@@ -74,7 +74,7 @@ static inline int32_t lineCheck(int _sens_type = 0){
 	    // 	sensor[i] = 0;
 	    // }
 
-	    if(sensor_a[i] >= (white_color_val * 2)){
+	    if(sensor_a[i] >= (white_color_val * 3)){
 	    	sensor[i] = 1;
 	    }
 	    else{
@@ -83,7 +83,7 @@ static inline int32_t lineCheck(int _sens_type = 0){
 	    Serial.print(String(sensor[i]));
 	}
 	
-	line_vector_val = lineCheckAnalizerSS();
+	line_vector_val = zritelNerw();
 	Serial.print("  ");
 	Serial.print(line_vector_val);
 	Serial.println(" >");
@@ -92,9 +92,9 @@ static inline int32_t lineCheck(int _sens_type = 0){
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+int16_t watch_track = 0; 
 
-
-static int32_t lineCheckAnalizerSS(){
+static int32_t zritelNerw(){
  	int16_t _left = 0;
  	int16_t _right = 0;
  	int32_t _line_vector_val_SS = 0;
@@ -108,6 +108,10 @@ static int32_t lineCheckAnalizerSS(){
  	}
 
 	_line_vector_val_SS = _left - _right;
+	watch_track = _left + _right;
+	Serial.println(" "); 
+	Serial.print("watch_track   ");
+	Serial.println(watch_track);
 	// Serial.print("   ");
 	// Serial.print(_line_vector_val_SS);
 	// Serial.print("   ");
@@ -153,27 +157,36 @@ delay(2);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////*/
 
-static inline void voditelServ(){
+static inline void voditelWithoutPID(){
 
 	int16_t _line_veexp = line_vector_val * 6;
 	int16_t _line_veexp_2 = line_vector_val * 6;
-	if(_line_veexp > 40){_line_veexp = 40;}
-	if(_line_veexp < -40){_line_veexp = -40;}
-	int16_t _required_servo_pos = map(_line_veexp, -40, 40, ZERO_POS + MAX_SERVO_ANGLE, ZERO_POS - MAX_SERVO_ANGLE);
+
+
+	if(_line_veexp > 66){_line_veexp = 66;}
+	if(_line_veexp < -66){_line_veexp = -66;}
+	int16_t _required_servo_pos = map(_line_veexp, 66, -66, ZERO_POS + MAX_SERVO_ANGLE, ZERO_POS - MAX_SERVO_ANGLE);
+
+	if(watch_track !=22){servo.write(_required_servo_pos);}
+
 
 	int16_t _required_motor_speed;
 	if(line_vector_val >= 0){
-		_required_motor_speed = map(_line_veexp_2, 40, 60, MAX_MOTOR_SPEED, MIN_MOTOR_SPEED);
+		_required_motor_speed = map(_line_veexp_2, 30, 66, MAX_MOTOR_SPEED, MIN_MOTOR_SPEED);
 	}else{
-		_required_motor_speed = map(_line_veexp_2, -40, -60, MAX_MOTOR_SPEED, MIN_MOTOR_SPEED);
+		_required_motor_speed = map(_line_veexp_2, -30, -66, MAX_MOTOR_SPEED, MIN_MOTOR_SPEED);
 	}
-	if(_line_veexp_2 > -40 && _line_veexp_2 < 40){_required_motor_speed = MAX_MOTOR_SPEED;}
+	if(_line_veexp_2 > -30 && _line_veexp_2 < 30){_required_motor_speed = MAX_MOTOR_SPEED;}
 
-	servo.write(_required_servo_pos);
+	// _required_motor_speed = 255;  // *
 
 	digitalWrite(MOTORIN1_PIN, HIGH);
 	digitalWrite(MOTORIN2_PIN, LOW);
-	analogWrite(PWM_PIN, _required_motor_speed);
+	if(watch_track != 22){
+		if(_required_motor_speed == 255){digitalWrite(PWM_PIN, HIGH);}
+		else{analogWrite(PWM_PIN, _required_motor_speed);}		
+	}
+	else {digitalWrite(PWM_PIN, LOW);}
 
 	Serial.print("   ");
 	Serial.print(_required_servo_pos);
@@ -183,7 +196,7 @@ static inline void voditelServ(){
 
 static inline void generalDriver(){
 	lineCheck();
-	voditelServ();
+	voditelWithoutPID();
 }
 void setup(){
 	pinMode(PWM_PIN, OUTPUT);
