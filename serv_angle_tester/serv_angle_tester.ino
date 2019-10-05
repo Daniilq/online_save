@@ -2,8 +2,8 @@
 Servo servo;
 
 #define SERVO_PIN 12
-#define MAX_SERVO_ANGLE 30
-#define ZERO_POS 90
+#define MAX_SERVO_ANGLE 40
+#define ZERO_POS 95
 
 int16_t servo_pos = ZERO_POS; 
 
