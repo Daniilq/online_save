@@ -44,9 +44,9 @@ if (irrecv.decode(&results))
     switch(results.value)
  
     {
-case (K_DOWN): 
+case (K_UP):
 small_stepper.setSpeed(600); 
-Steps2Take  =  -9240; 
+Steps2Take  =  -18480; 
 small_stepper.step(Steps2Take);
 delay(1500); 
 digitalWrite(5,LOW);
@@ -55,9 +55,9 @@ digitalWrite(7,LOW);
 digitalWrite(8,LOW);
 // Serial.println("down");
 break;
-case (K_UP):
+case (K_DOWN): 
 small_stepper.setSpeed(600);
-Steps2Take  =  9240;
+Steps2Take  =  18480;
 small_stepper.step(Steps2Take);
 delay(1500); 
 digitalWrite(5,LOW);

@@ -26,7 +26,7 @@ Servo servo;
 
 #define SER_DEBUG_ENABLE 1 
 
-static int16_t sensor[11]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // масив сенсоров 
+static int16_t sensor[TOTAL_SENSORS]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // масив сенсоров 
 static int16_t line_vector_val = 0;
 
 
@@ -92,26 +92,31 @@ static inline int32_t lineCheck(int _sens_type = 0){
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int16_t watch_track = 0; 
+int16_t watch_track_val = 0; 
 
 static int32_t zritelNerw(){
+	int16_t _left_black = 0;
+	int16_t _right_black = 0;
+
  	int16_t _left = 0;
  	int16_t _right = 0;
- 	int32_t _line_vector_val_SS = 0;
- 	for(int i=0; i<11; i++){
- 		if(sensor[i] == 0 ){_left ++;}
- 		else {break;}
+	int32_t _line_vector_val_SS = 0;
+ 	for(int i=0; i<TOTAL_SENSORS; i++){
+ 		if((sensor[i] == 0) && (_left_black == 0)){_left ++;}
+ 		else if(sensor[i] != 0){_left_black ++;}
+ 		if((sensor[(TOTAL_SENSORS - 1) - i] == 0) && (_right_black == 0)){_right ++;}
+ 		else if(sensor[(TOTAL_SENSORS - 1) - i] != 0){_right_black ++;}
  	}
- 	for(int i=10; i>=0; i--){
- 		if(sensor[i] == 0 ){_right ++;}
- 		else {break;}	
- 	}
+ 	// for(int i=10; i>=0; i--){
+ 	// 	if(sensor[i] == 0 ){_right ++;}
+ 	// 	else {break;}	
+ 	// } 
 
 	_line_vector_val_SS = _left - _right;
-	watch_track = _left + _right;
+	watch_track_val = _left + _right;
 	Serial.println(" "); 
-	Serial.print("watch_track   ");
-	Serial.println(watch_track);
+	Serial.print("watch_track_val   ");
+	Serial.println(watch_track_val);
 	// Serial.print("   ");
 	// Serial.print(_line_vector_val_SS);
 	// Serial.print("   ");
@@ -167,7 +172,7 @@ static inline void voditelWithoutPID(){
 	if(_line_veexp < -66){_line_veexp = -66;}
 	int16_t _required_servo_pos = map(_line_veexp, 66, -66, ZERO_POS + MAX_SERVO_ANGLE, ZERO_POS - MAX_SERVO_ANGLE);
 
-	if(watch_track !=22){servo.write(_required_servo_pos);}
+	if(watch_track_val !=22){servo.write(_required_servo_pos);}
 
 
 	int16_t _required_motor_speed;
@@ -182,7 +187,7 @@ static inline void voditelWithoutPID(){
 
 	digitalWrite(MOTORIN1_PIN, HIGH);
 	digitalWrite(MOTORIN2_PIN, LOW);
-	if(watch_track != 22){
+	if(watch_track_val != 22){
 		if(_required_motor_speed == 255){digitalWrite(PWM_PIN, HIGH);}
 		else{analogWrite(PWM_PIN, _required_motor_speed);}		
 	}
