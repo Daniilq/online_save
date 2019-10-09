@@ -29,13 +29,12 @@ Servo servo;
 static int16_t sensor[TOTAL_SENSORS]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // масив сенсоров 
 static int16_t line_vector_val = 0;
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int16_t white_color_val = 70;  // значение черного цвета
 int16_t black_color_val = 1000;  // значение белого цвета
-uint16_t sensor_a[TOTAL_SENSORS]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // массив с аналоговыми значениями
-int16_t sensor_correction[TOTAL_SENSORS]={-3, -2, -11, -1, -2, -2, 0, -2, -2, -13, -1};  // массив со значениями коррекции датчиков, для выравнивания их значений между собой
-// 36,35,37,34,35,35,33,35,35,42,34,
+int16_t sensor_a[TOTAL_SENSORS]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // массив с аналоговыми значениями
+int16_t sensor_correction[TOTAL_SENSORS]={-3, -2, -56, -1, -2, -2, 0, -2, -2, -43, -1};  // массив со значениями коррекции датчиков, для выравнивания их значений между собой
+//56,44,79,45,45,43,39,39,39,63,36,
 int16_t light_correction = 0;   // поправка на освещенность
 
 int16_t left_sens_val = 0;      // переменная для накопления значения левой ошибки
@@ -43,7 +42,7 @@ int16_t center_sens_val = 0;    // переменная для накоплен�
 int16_t right_sens_val = 0;     // переменная для накопления значения правой ошибки
 int8_t convers_oper_flag = 0;   // флаг операции преобразования
 
-static inline int32_t lineCheck(int _sens_type = 0){
+static inline int16_t lineCheck(int _sens_type = 0){
 	left_sens_val = 0;
 	center_sens_val = 0;
 	right_sens_val = 0;
@@ -66,20 +65,21 @@ static inline int32_t lineCheck(int _sens_type = 0){
 	Serial.print("  ");
 
 
-	for(int i=0; i<TOTAL_SENSORS; i++){
-	    // if((sensor_a[i] >= (black_color_val - (black_color_val - white_color_val) / 4)) ){
+	for(int i=0; i<TOTAL_SENSORS; i++){  //
+	    if((sensor_a[i] >= (black_color_val - ((black_color_val - white_color_val) / 4))) && (sensor_a[i] >= (white_color_val * 2))){
+	    	sensor[i] = 1;
+	    }
+	    else{
+	    	sensor[i] = 0;
+	    }
+
+	    // if(sensor_a[i] >= (white_color_val * 3)){
 	    // 	sensor[i] = 1;
 	    // }
 	    // else{
 	    // 	sensor[i] = 0;
 	    // }
 
-	    if(sensor_a[i] >= (white_color_val * 3)){
-	    	sensor[i] = 1;
-	    }
-	    else{
-	    	sensor[i] = 0;
-	    }
 	    Serial.print(String(sensor[i]));
 	}
 	
@@ -87,7 +87,6 @@ static inline int32_t lineCheck(int _sens_type = 0){
 	Serial.print("  ");
 	Serial.print(line_vector_val);
 	Serial.println(" >");
-	    // delay(1000);
 	return line_vector_val;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,11 +105,7 @@ static int32_t zritelNerw(){
  		else if(sensor[i] != 0){_left_black ++;}
  		if((sensor[(TOTAL_SENSORS - 1) - i] == 0) && (_right_black == 0)){_right ++;}
  		else if(sensor[(TOTAL_SENSORS - 1) - i] != 0){_right_black ++;}
- 	}
- 	// for(int i=10; i>=0; i--){
- 	// 	if(sensor[i] == 0 ){_right ++;}
- 	// 	else {break;}	
- 	// } 
+ 	} 
 
 	_line_vector_val_SS = _left - _right;
 	watch_track_val = _left + _right;
