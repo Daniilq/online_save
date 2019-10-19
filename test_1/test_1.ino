@@ -176,15 +176,27 @@ inline void vozvratNaTrasy(){
 
 }
 
-int16_t prev_line_vector_line = line_vector_val; 
-inline void integraciya(int16_t _lvv){
-	if(prev_line_vector_line > line_vector_val){
-	     prev_line_vector_line - line_vector_val;
-	 } 
-	 else{
-	 	line_vector_val - prev_line_vector_line;
-	 }
-} 
+int16_t prev_line_vector_val = line_vector_val; 
+inline void integraciya(){
+	int16_t _skorost_ygla_povorota = 0; 
+	// находим скорость ухода с трассы
+	if(prev_line_vector_val > line_vector_val){_skorost_ygla_povorota = prev_line_vector_val - line_vector_val;}  
+	else{_skorost_ygla_povorota = line_vector_val - prev_line_vector_val;}
+
+	// находим вектор ухода с трассы(определяем уходим с трассы или возвращаемся на трассу)
+	if(prev_line_vector_val < 0 && line_vector_val < 0){
+		if(prev_line_vector_val > line_vector_val){}
+		else if (prev_line_vector_val < line_vector_val){_skorost_ygla_povorota = 0 - _skorost_ygla_povorota;}
+	}
+	else if(prev_line_vector_val > 0 && line_vector_val > 0){
+		if(prev_line_vector_val > line_vector_val){_skorost_ygla_povorota = 0 - _skorost_ygla_povorota;}
+		else if (prev_line_vector_val < line_vector_val){}
+	}
+	else if(prev_line_vector_val > 0 && line_vector_val < 0){}
+	else if(prev_line_vector_val < 0 && line_vector_val > 0){}
+	else{}
+	return _skorost_ygla_povorota;
+}
 
 inline void voditelWithoutPID(){ // функция которая отвечает за езду машины
 
@@ -193,10 +205,33 @@ inline void voditelWithoutPID(){ // функция которая отвечае
 
 	// if(_line_veexp < -11){_line_veexp = -11;}
 	// else if(_line_veexp > 11){_line_veexp = 11;}
+	
+	int16_t _required_servo_pos = 0;
+	// _required_servo_pos = map(_line_veexp, -11, 11, ZERO_POS + MAX_SERVO_ANGLE, ZERO_POS - MAX_SERVO_ANGLE); // выводим нужный градус поворота 
+	// if(watch_track_val !=22 && lr_sum >= 7){servo.write(_required_servo_pos);} 
+	
+	int16_t vect_trass = integraciya; 
+	if(vect_trass < 0){ // ВОЗВРАЩАЕМСЯ НА ТРАССУ
+		// if(_line_veexp < -11){_line_veexp = -11;}
+	// else if(_line_veexp > 11){_line_veexp = 11;}
 
-	int16_t _required_servo_pos = map(_line_veexp, -11, 11, ZERO_POS + MAX_SERVO_ANGLE, ZERO_POS - MAX_SERVO_ANGLE); // выводим нужный градус поворота 
-	if(watch_track_val !=22 && lr_sum >= 7){servo.write(_required_servo_pos);} 
-
+		_required_servo_pos = map(_line_veexp, -11, 11, ZERO_POS + (MAX_SERVO_ANGLE - 5), ZERO_POS - (MAX_SERVO_ANGLE - 5)); // выводим нужный градус поворота 
+		if(watch_track_val !=22 && lr_sum >= 7){servo.write(_required_servo_pos);} 	
+	}
+	else if(vect_trass == 0){ // БЕЗ ИЗМИНЕНИЙ 
+		// if(_line_veexp < -11){_line_veexp = -11;}
+		// else if(_line_veexp > 11){_line_veexp = 11;}
+		
+		_required_servo_pos = map(_line_veexp, -11, 11, ZERO_POS + MAX_SERVO_ANGLE, ZERO_POS - MAX_SERVO_ANGLE); // выводим нужный градус поворота 
+		if(watch_track_val !=22 && lr_sum >= 7){servo.write(_required_servo_pos);}
+	}
+	else if(vect_trass > 0){ // ВЫЛЕТАЕМ С ТРАССЫ 
+		// if(_line_veexp < -11){_line_veexp = -11;}
+		// else if(_line_veexp > 11){_line_veexp = 11;}
+		
+		_required_servo_pos = map(_line_veexp, -10, 10, ZERO_POS + MAX_SERVO_ANGLE, ZERO_POS - MAX_SERVO_ANGLE); // выводим нужный градус поворота 
+		if(watch_track_val !=22 && lr_sum >= 7){servo.write(_required_servo_pos);}	
+	}
 
 	int16_t _required_motor_speed;
 	if(line_vector_val >= 0){ // работаем со скоростью 
