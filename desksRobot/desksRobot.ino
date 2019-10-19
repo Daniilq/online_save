@@ -1,5 +1,5 @@
 #define LEFT_SENSOR_PIN  2
-#define RIDHT_SENSOR_PIN 3
+#define RIGHT_SENSOR_PIN 3
 
 #define LEFT_MOTOR_A_PIN 4 
 #define LEFT_MOTOR_B_PIN 5
@@ -74,19 +74,16 @@ void carTransmision(int8_t _direction){
         digitalWrite(RIGHT_MOTOR_B_PIN, HIGH);
         analogWrite(RIGHT_MOTOR_PWM_PIN, MAX_SPEED);    
     } 
-
 }
 
 void voditelMashine(){
     left_sensor_state = digitalRead(LEFT_SENSOR_PIN);
     right_sensor_state = digitalRead(RIGHT_SENSOR_PIN);
     if(left_sensor_state == 1 && right_sensor_state == 1){  // forward
-
-        
+    
     }
-
-
 } 
+
 void loop(){
     voditelMashine();    
 }

@@ -22,9 +22,7 @@
 
 #define RELE_PIN 4
 
-IRrecv irrecv(3); // указываем вывод, к которому подключен приемник
-
-
+IRrecv irrecv(3);
 decode_results results;
 
 void setup() {
