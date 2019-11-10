@@ -20,11 +20,11 @@ NewPing sonar(PING_PIN, PING_PIN, MAX_DISTANCE); // Настройка пино�
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define SERVO_PIN 12
-#define ZERO_POS 90				//среднее положение сервы
-#define MAX_SERVO_ANGLE 34		//максимальный yгол поворот(по умолчанию 40)
+#define ZERO_POS 88				//среднее положение сервы
+#define MAX_SERVO_ANGLE 35		//максимальный yгол поворот(по умолчанию 40)
 
-#define MIN_MOTOR_SPEED 180		// минимальная скорость 
-#define MAX_MOTOR_SPEED 180		// максимальная скорость 
+#define MIN_MOTOR_SPEED 160		// минимальная скорость 
+#define MAX_MOTOR_SPEED 160		// максимальная скорость 
 
 #define TOTAL_SENSORS 11        // всего сенсоров
 
@@ -38,8 +38,11 @@ int16_t line_vector_val = 0;
 int16_t white_color_val = 70;  // значение черного цвета
 int16_t black_color_val = 1000;  // значение белого цвета
 int16_t sensor_a[TOTAL_SENSORS]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // массив с аналоговыми значениями
-int16_t sensor_correction[TOTAL_SENSORS]={-3, -2, -56, -1, -2, -2, 0, -2, -2, -43, -1};  // массив со значениями коррекции датчиков, для выравнивания их значений между собой
-//56,44,79,45,45,43,39,39,39,63,36,
+int16_t sensor_correction[TOTAL_SENSORS]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // массив со значениями коррекции датчиков, для выравнивания их значений между собой
+// 163,86,315,75,563,578,514,80,77,297,68,
+// -3, -2, -30, -1, -2, -2, 0, -2, -2, -156, -1             БЫЛО ТАК
+// -93, -16, -245, 0, 0, 0, 0, -10, 0, -227, 0
+// -3, -2, -30, -1, -2, -2, 0, -2, -2, -56, -1 
 int16_t light_correction = 0;   // поправка на освещенность
 
 int16_t left_sens_val = 0;      // переменная для накопления значения левой ошибки
@@ -212,23 +215,23 @@ inline void voditelWithoutPID(){ // функция которая отвечае
 	int16_t vect_trass = integraciya; 
 	if(vect_trass < 0){ // ВОЗВРАЩАЕМСЯ НА ТРАССУ
 		// if(_line_veexp < -11){_line_veexp = -11;}
-	// else if(_line_veexp > 11){_line_veexp = 11;}
+		// else if(_line_veexp > 11){_line_veexp = 11;}
 
-		_required_servo_pos = map(_line_veexp, -11, 11, ZERO_POS + (MAX_SERVO_ANGLE - 5), ZERO_POS - (MAX_SERVO_ANGLE - 5)); // выводим нужный градус поворота 
+		_required_servo_pos = map(_line_veexp, 11, -11, ZERO_POS + (MAX_SERVO_ANGLE - 5), ZERO_POS - (MAX_SERVO_ANGLE - 5)); // выводим нужный градус поворота 
 		if(watch_track_val !=22 && lr_sum >= 7){servo.write(_required_servo_pos);} 	
 	}
 	else if(vect_trass == 0){ // БЕЗ ИЗМИНЕНИЙ 
 		// if(_line_veexp < -11){_line_veexp = -11;}
 		// else if(_line_veexp > 11){_line_veexp = 11;}
 		
-		_required_servo_pos = map(_line_veexp, -11, 11, ZERO_POS + MAX_SERVO_ANGLE, ZERO_POS - MAX_SERVO_ANGLE); // выводим нужный градус поворота 
+		_required_servo_pos = map(_line_veexp, 11, -11, ZERO_POS + MAX_SERVO_ANGLE, ZERO_POS - MAX_SERVO_ANGLE); // выводим нужный градус поворота 
 		if(watch_track_val !=22 && lr_sum >= 7){servo.write(_required_servo_pos);}
 	}
 	else if(vect_trass > 0){ // ВЫЛЕТАЕМ С ТРАССЫ 
 		// if(_line_veexp < -11){_line_veexp = -11;}
 		// else if(_line_veexp > 11){_line_veexp = 11;}
 		
-		_required_servo_pos = map(_line_veexp, -10, 10, ZERO_POS + MAX_SERVO_ANGLE, ZERO_POS - MAX_SERVO_ANGLE); // выводим нужный градус поворота 
+		_required_servo_pos = map(_line_veexp, 10, -10, ZERO_POS + MAX_SERVO_ANGLE, ZERO_POS - MAX_SERVO_ANGLE); // выводим нужный градус поворота 
 		if(watch_track_val !=22 && lr_sum >= 7){servo.write(_required_servo_pos);}	
 	}
 
@@ -265,7 +268,7 @@ inline void voditelWithoutPID(){ // функция которая отвечае
 	Serial.println(_required_motor_speed);
 }
 
-inline void generalDriver(){ // основниая функция в которой выполняем все основные действия 
+inline void generalDriver(){ // основниая функция в которой выполняем все действия 
 	lineCheck();
 	if(line_vector_val > 0 && line_vector_val <= 11){latch_vozvrata = 1;}
 	else if(line_vector_val < 0 && line_vector_val <= -11 ){latch_vozvrata = -1;}

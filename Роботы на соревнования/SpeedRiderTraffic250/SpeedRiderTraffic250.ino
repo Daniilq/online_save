@@ -1,3 +1,10 @@
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////РАБОЧАЯ СКОРОСТНАЯ МАШИНА ПРОВЕРЕНО 38.10 16:34//////////////////////////////////////////////////////////////////
+//////////////////////////////////ДОБАВЛЕН СТАРТ СО СВЕТОФОРА РАБОЧАЯ СКОРОСТНАЯ МАШИНА ПРОВЕРЕНО 30.10 17:36//////////////////////////////////////
+//////////////////////////////////ПРОВЕРЕНО 31.10//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////ПРОВЕРЕНО 1.11///////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////ДОБАВЛЕНА ФУНКЦИЯ СВЕТОФОРОВ(НУЖНО ПРОВЕРИТЬ ЕЕ)/////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // #include <Arduino.h>
 #include <Servo.h>    // серво библиотека 
 #include <NewPing.h>  // дальномер библиотека 
@@ -8,25 +15,26 @@ Servo servo;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define DEBUG_RIDER 0
 
-#define PWM_PIN 8       // пин мотора который отвечает за скорость 
-#define MOTORIN1_PIN 7      // пин мотора
-#define MOTORIN2_PIN 6      // пин мотора1    
-#define DIGITAL_SENS_PIN 40   // пин первого цифрового сенсора
+#define PWM_PIN 8               // пин мотора который отвечает за скорость 
+#define MOTORIN1_PIN 7          // пин мотора
+#define MOTORIN2_PIN 6          // пин мотора1    
+#define DIGITAL_SENS_PIN 40     // пин первого цифрового сенсора
 #define ANALOG_SENS_PIN 54      // пин первого аналогово сенсора
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define PING_PIN  10  // Пин с Arduino подключен к пинам trigger и echo на ультразвуковом датчике расстояния
 #define MAX_DISTANCE 40 // Максимальное расстояние, которое мы контролируем (в сантиметрах). Максимальное расстояние подобных датчиков находится в диапазоне 400-500см.
 NewPing sonar(PING_PIN, PING_PIN, MAX_DISTANCE); // Настройка пинов и максимального расстояния
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// #define RELE_PIN 5 // пин реле который используется для тормаза 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define SERVO_PIN 12
-#define ZERO_POS 90       //среднее положение сервы
-#define MAX_SERVO_ANGLE 34    //максимальный yгол поворот(по умолчанию 40)
+#define ZERO_POS 91            //среднее положение сервы
+#define MAX_SERVO_ANGLE 32    //максимальный yгол поворот(по умолчанию 40)
 
-#define MIN_MOTOR_SPEED 165   // минимальная скорость 
-#define MAX_MOTOR_SPEED 165   // максимальная скорость 
+#define MIN_MOTOR_SPEED 142   // минимальная скорость 
+#define MAX_MOTOR_SPEED 152   // максимальная скорость 
 
-#define TOTAL_SENSORS 11        // всего сенсоров
+#define TOTAL_SENSORS 11      // всего сенсоров
 
 #define SER_DEBUG_ENABLE 1 
 
@@ -38,8 +46,8 @@ int16_t line_vector_val = 0;
 int16_t white_color_val = 70;  // значение черного цвета
 int16_t black_color_val = 1000;  // значение белого цвета
 int16_t sensor_a[TOTAL_SENSORS]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  // массив с аналоговыми значениями
-int16_t sensor_correction[TOTAL_SENSORS]={-3, -2, -56, -1, -2, -2, 0, -2, -2, -43, -1};  // массив со значениями коррекции датчиков, для выравнивания их значений между собой
-//56,44,79,45,45,43,39,39,39,63,36,
+int16_t sensor_correction[TOTAL_SENSORS]={-7, 0, -47, 0, -16, -13, 0, -1, -1, -17, 0};  // массив со значениями коррекции датчиков, для выравнивания их значений между собой
+// 57,48,97,45,166,163,150,51,51,67,44,
 int16_t light_correction = 0;   // поправка на освещенность
 
 int16_t left_sens_val = 0;      // переменная для накопления значения левой ошибки
@@ -61,21 +69,21 @@ int16_t lineCheck(int _sens_type = 0){
       sensor_a[i] = analogRead(ANALOG_SENS_PIN + i) + sensor_correction[i];
       if(sensor_a[i] < white_color_val){white_color_val = sensor_a[i];}  // определяем белый
       if(sensor_a[i] > black_color_val){black_color_val = sensor_a[i];}  // определяем черный
-      // Serial.print(String(sensor_a[i]) + ",");
+      Serial.print(String(sensor_a[i]) + ",");
   }
-  // Serial.print("   ");
-  // Serial.print("b ");
-  // Serial.print(black_color_val);  
-  // Serial.print("  ");
-  // Serial.print("w ");
-  // Serial.print(white_color_val);
-  // Serial.print("   coef [");
-  // Serial.print(float(black_color_val) / float(white_color_val));
-  // Serial.print("]  ");
+  Serial.print("   ");
+  Serial.print("b ");
+  Serial.print(black_color_val);  
+  Serial.print("  ");
+  Serial.print("w ");
+  Serial.print(white_color_val);
+  Serial.print("   coef [");
+  Serial.print(float(black_color_val) / float(white_color_val));
+  Serial.print("]  ");
 
 
   for(int i=0; i<TOTAL_SENSORS; i++){  //
-      if((sensor_a[i] >= (black_color_val - ((black_color_val - white_color_val) / 4))) && (sensor_a[i] >= (white_color_val * 2))){
+      if((sensor_a[i] >= (black_color_val - ((black_color_val - white_color_val) / 4))) && (sensor_a[i] >= (white_color_val * 3))){
         sensor[i] = 1;
       }
       else{
@@ -89,16 +97,16 @@ int16_t lineCheck(int _sens_type = 0){
       //  sensor[i] = 0;
       // }
 
-      // Serial.print(String(sensor[i]));
+      Serial.print(String(sensor[i]));
   }
   
   line_vector_val = errorAnalizer();
 
-  // Serial.print("Error   ");
-  // Serial.print(line_vector_val);
-  // if(line_vector_val > 0 && line_vector_val <= 11){Serial.println(" >");}
-  // else if(line_vector_val < 0 && line_vector_val >= -11 ){Serial.println(" <");}
-  // else if(line_vector_val == 0){Serial.println(" | ");}
+  Serial.print("Error   ");
+  Serial.print(line_vector_val);
+  if(line_vector_val > 0 && line_vector_val <= 11){Serial.println(" >");}
+  else if(line_vector_val < 0 && line_vector_val >= -11 ){Serial.println(" <");}
+  else if(line_vector_val == 0){Serial.println(" | ");}
   return line_vector_val;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -127,31 +135,31 @@ int32_t errorAnalizer(){
 
   _line_vector_val_SS = left_white - right_white;
   watch_track_val = left_white + right_white;
-  // Serial.println(" "); 
-  // Serial.print("watch_track_val   ");
-  // Serial.println(watch_track_val);
-  // Serial.print("   ");
-  // Serial.print(_line_vector_val_SS);
-  // Serial.print("   ");
+  Serial.println(" "); 
+  Serial.print("watch_track_val   ");
+  Serial.println(watch_track_val);
+  Serial.print("   ");
+  Serial.print(_line_vector_val_SS);
+  Serial.print("   ");
 
-  // Serial.print("l,r,lb,rb = ");
-  // Serial.print("   l ");
-  // Serial.print(left_white);
-  // Serial.print("   r ");
-  // Serial.print(right_white);
-  // Serial.print("   lb ");
-  // Serial.print(left_black);
-  // Serial.print("   rb ");
-  // Serial.print(right_black);
-  // Serial.print("   lr sum ");
+  Serial.print("l,r,lb,rb = ");
+  Serial.print("   l ");
+  Serial.print(left_white);
+  Serial.print("   r ");
+  Serial.print(right_white);
+  Serial.print("   lb ");
+  Serial.print(left_black);
+  Serial.print("   rb ");
+  Serial.print(right_black);
+  Serial.print("   lr sum ");
   lr_sum = left_white + right_white;
-  // Serial.println(lr_sum);
+  Serial.println(lr_sum);
 
   return _line_vector_val_SS;
 }
 
 // int16_t shturman(){
-//   int16_t traffic_light_value = 0;
+// int16_t traffic_light_value = 0;
   
 //   if(Serial1.available()){
 //     traffic_light_value = Serial1.read();
@@ -160,63 +168,17 @@ int32_t errorAnalizer(){
 //   return(traffic_light_value);
 // }
 
-void roadTraffic(){
-    int16_t traffic_light_value = 0;
-  
-  if(Serial1.available()){
-    traffic_light_value = Serial1.read();
-  }
-  if(traffic_light_value == 0){ // красный 
-    digitalWrite(MOTORIN1_PIN, LOW);
-    digitalWrite(MOTORIN2_PIN, LOW);
-    analogWrite(PWM_PIN, LOW);
-    // servo.write(ZERO_POS);
-  }
-  else if(traffic_light_value == 1){
-    digitalWrite(MOTORIN1_PIN, LOW);
-    digitalWrite(MOTORIN2_PIN, LOW);
-    analogWrite(PWM_PIN, LOW);
-    // servo.write(ZERO_POS);
-  }
-  else if(traffic_light_value == 2){
-    generalDriver();
-  }
-  else if(traffic_light_value == 3){
-    generalDriver();
-  }
-  else if(traffic_light_value == 4){
-    digitalWrite(MOTORIN1_PIN, LOW);
-    digitalWrite(MOTORIN2_PIN, LOW);
-    analogWrite(PWM_PIN, LOW);
-    // servo.write(ZERO_POS); 
-  }
-  else if(traffic_light_value == 5){
-    digitalWrite(MOTORIN1_PIN, LOW);
-    digitalWrite(MOTORIN2_PIN, LOW);
-    analogWrite(PWM_PIN, LOW);
-    delay(500);
-    // servo.write(ZERO_POS); 
-  }
-  else if(traffic_light_value == 6){
-    digitalWrite(MOTORIN1_PIN, LOW);
-    digitalWrite(MOTORIN2_PIN, LOW);
-    analogWrite(PWM_PIN, LOW);
-    delay(500);
-    // servo.write(ZERO_POS); 
-  }
-}
-
 inline void sensorFiltrator(){
-  // Serial.print(" F ");
+  Serial.print(" F ");
   for(int i=0; i<TOTAL_SENSORS; i++){
     filtered_sensors[i] = sensor[i];
-    // Serial.print(filtered_sensors[i]);
+    Serial.print(filtered_sensors[i]);
   }
   // Serial.println("   ");
 }
 
 uint8_t distanceF(){
-  delay(30); // Задержка в 30 миллисекунд между генерацией волн. 29 миллисекунд – минимально допустимая задержка.
+  // delay(30); // Задержка в 30 миллисекунд между генерацией волн. 29 миллисекунд – минимально допустимая задержка.
   unsigned int _echo_time = sonar.ping(); // Генерация сигнала, получение времени в микросекундах (_echo_time).
   int _dist = _echo_time / US_ROUNDTRIP_CM;
 
@@ -232,16 +194,26 @@ inline void vozvratNaTrasy(){
 
 }
 
+int16_t traffic_light_value;
+void roadTraffic(){ // функция в которой считываем сигналы светофора 
+  if(Serial1.available()){ // считываем значение 
+    traffic_light_value = Serial1.read(); // выводим значение как траффик...
+  }
+  Serial.print("TRAFFIC   "); // выводим траффик на монитор порта 
+  Serial.println(traffic_light_value);
+}
+
 inline void voditelWithoutPID(){
 
   int16_t _line_veexp = line_vector_val;
   int16_t _line_veexp_2 = line_vector_val;
+  // int16_t _tlv = traffic_light_value;
 
   // if(_line_veexp < -11){_line_veexp = -11;}
   // else if(_line_veexp > 11){_line_veexp = 11;}
 
   int16_t _required_servo_pos = map(_line_veexp, 11, -11, ZERO_POS + MAX_SERVO_ANGLE, ZERO_POS - MAX_SERVO_ANGLE);
-  if(watch_track_val !=22 && lr_sum >= 7){servo.write(_required_servo_pos);}
+  if(watch_track_val !=22 && lr_sum >= 8){servo.write(_required_servo_pos);}
 
 
   int16_t _required_motor_speed;
@@ -249,44 +221,55 @@ inline void voditelWithoutPID(){
   else{_required_motor_speed = map(_line_veexp_2, -5, -11, MAX_MOTOR_SPEED, MIN_MOTOR_SPEED);}
   if(_line_veexp_2 > -5 && _line_veexp_2 < 5){_required_motor_speed = MAX_MOTOR_SPEED;}
 
-  _required_motor_speed = MAX_MOTOR_SPEED;
+  // _required_motor_speed = MAX_MOTOR_SPEED;
 
   digitalWrite(MOTORIN1_PIN, HIGH);
   digitalWrite(MOTORIN2_PIN, LOW);
-  if(watch_track_val != 22){
+  if(watch_track_val != 22 /*&& traffic_light_value == 2*/){
     if(_required_motor_speed == 255){digitalWrite(PWM_PIN, HIGH);}
     else{analogWrite(PWM_PIN, _required_motor_speed);}    
   }
-  else{
-    uint8_t _dist = distanceF();
-    if(_dist >= 0){ // Если видим препятствие - стоим 
+  else {
+    // uint8_t _dist = distanceF();
+    // if(_dist >= 0){ // Если видим препятствие - стоим 
+
       digitalWrite(PWM_PIN, LOW);
       // servo.write(ZERO_POS);
-    }
-    else{  // возврат на трассу 
-      vozvratNaTrasy();
-    }
+    // }
+    // else{  // возврат на трассу 
+    //   vozvratNaTrasy();
+    // }
   }
 
-  // Serial.print("   ");
-  // Serial.print(_required_servo_pos);
-  // Serial.print("   ");
-  // Serial.println(_required_motor_speed);
+  Serial.print("   ");
+  Serial.print(_required_servo_pos);
+  Serial.print("   ");
+  Serial.println(_required_motor_speed);
 }
 
+// int16_t vTraffic = 24;
 inline void generalDriver(){
-  lineCheck();
+  lineCheck(); // функция считывания линии
+  roadTraffic(); // функция светофоров 
+  voditelWithoutPID(); // функция езды 
+  // if((traffic_light_value == 5 || traffic_light_value == 6) && traffic_light_value != vTraffic){
+  //   digitalWrite(PWM_PIN, LOW);   
+  //   delay(5000);
+  //   traffic_light_value == vTraffic;
+  // }
   if(line_vector_val > 0 && line_vector_val <= 11){latch_vozvrata = 1;}
   else if(line_vector_val < 0 && line_vector_val <= -11 ){latch_vozvrata = -1;}
-  voditelWithoutPID();
 }
 void setup(){
   pinMode(PWM_PIN, OUTPUT);
   pinMode(MOTORIN1_PIN, OUTPUT);
   pinMode(MOTORIN2_PIN, OUTPUT);
-  Serial.begin(9600);
-  Serial1.begin(115200);
+  
 
+  // Serial.begin(9600);
+  // Serial.begin(115200);
+  Serial.begin(115200);
+  Serial1.begin(115200);
   servo.attach(SERVO_PIN);
   delay(50);
   servo.write(ZERO_POS);
@@ -295,8 +278,7 @@ void setup(){
 void loop(){
 // uint32_t rttyu = millis();;
 
-// roadTraffic();
-roadTraffic();
+generalDriver();
 // delay(500);
 // Serial.print("time   ");
 // Serial.println(millis() - rttyu);
