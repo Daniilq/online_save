@@ -41,8 +41,8 @@ NewPing sonar(PING_PIN, PING_PIN, MAX_DISTANCE); // Настройка пино�
 #define ZERO_POS 91       // среднее положение сервы
 #define MAX_SERVO_ANGLE 31    //максимальный yгол поворот(по умолчанию 40)
 
-#define MIN_MOTOR_SPEED 105   // минимальная скорость 
-#define MAX_MOTOR_SPEED 110  // максимальная скорость 
+#define MIN_MOTOR_SPEED 110   // минимальная скорость 
+#define MAX_MOTOR_SPEED 120  // максимальная скорость 
 
 #define TOTAL_SENSORS 11        // всего сенсоров
 
@@ -188,15 +188,47 @@ inline void sensorFiltrator(){
   // Serial.println("   ");
 }
 
+int16_t distanc;
 uint8_t distanceF(){
- // delay(30); // Задержка в 30 миллисекунд между генерацией волн. 29 миллисекунд – минимально допустимая задержка.
+ delay(30); // Задержка в 30 миллисекунд между генерацией волн. 29 миллисекунд – минимально допустимая задержка.
  unsigned int _echo_time = sonar.ping(); // Генерация сигнала, получение времени в микросекундах (_echo_time).
- int _dist = _echo_time / US_ROUNDTRIP_CM;
+ distanc = _echo_time / US_ROUNDTRIP_CM;
 
- // Serial.print("Distance: ");
- // Serial.print(_dist); // Преобразование времени в расстояние и отображение результата (0 соответствует выходу за допустимый диапазон)
- // Serial.println("cm");
- return _dist;
+ Serial.print("Distance: ");
+ Serial.print(distanc); // Преобразование времени в расстояние и отображение результата (0 соответствует выходу за допустимый диапазон)
+ Serial.println("cm");
+}
+
+bool sturman_run_state = 0;
+void babulka(){         // Датчик дальномера 
+  distanceF();
+  if(distanc <= 30 && distanc > 0){
+    // резкий тормоз
+    analogWrite(PWM_PIN, LOW);
+    digitalWrite(RELE_PIN, LOW);  
+    delay(250);
+    digitalWrite(RELE_PIN, HIGH);
+    // зaдний ход
+    if(sturman_run_state == 1){
+      digitalWrite(MOTORIN1_PIN, LOW);
+      digitalWrite(MOTORIN2_PIN, HIGH);
+      digitalWrite(PWM_PIN, HIGH);
+      delay(200);
+      // резкий тормоз(2)
+      digitalWrite(PWM_PIN, LOW);
+      digitalWrite(RELE_PIN, LOW); 
+      delay(250);
+      digitalWrite(RELE_PIN, HIGH);
+      // возвращаем передний ход
+      digitalWrite(MOTORIN1_PIN, HIGH);
+      digitalWrite(MOTORIN2_PIN, LOW);
+      sturman_run_state = 0;
+    }
+      while(1){
+        distanceF();
+        if(distanc >= 35 || distanc == 0){break;}
+    }
+  }    
 }
 
 
@@ -244,8 +276,8 @@ inline void integraciya(){
   return _skorost_ygla_povorota;
 }
 
-bool sturman_run_state = 0;
 void sturman(){
+  babulka();
   roadTraffic(); // функция светофоров 
   if(traffic_light_value == 0 || traffic_light_value == 1 || traffic_light_value == 3 || traffic_light_value == 4){
     // резкий тормоз
@@ -258,7 +290,7 @@ void sturman(){
       digitalWrite(MOTORIN1_PIN, LOW);
       digitalWrite(MOTORIN2_PIN, HIGH);
       digitalWrite(PWM_PIN, HIGH);
-      delay(700);
+      delay(300);
       // резкий тормоз(2)
       digitalWrite(PWM_PIN, LOW);
       digitalWrite(RELE_PIN, LOW); 
@@ -270,13 +302,14 @@ void sturman(){
       sturman_run_state = 0;
     }    
     while(1){
-    roadTraffic();
-    if(traffic_light_value == 2){break;}
+      roadTraffic();
+      if(traffic_light_value == 2){break;}
     }
   }
 }
 
 inline void voditelWithoutPID(){
+  // babulka();
   sturman();
   sturman_run_state = 1;
 
@@ -335,15 +368,18 @@ inline void voditelWithoutPID(){
   Serial.println(_required_motor_speed);
 }
 
-int16_t vTraffic = 24;
+int16_t vTraffic = 0;
 inline void generalDriver(){
   lineCheck(); // функция считывания линии
   voditelWithoutPID(); // функция езды
 
-  if((traffic_light_value == 5 || traffic_light_value == 6) && traffic_light_value != vTraffic){
-    digitalWrite(PWM_PIN, LOW);   
+  if((traffic_light_value == 5 || traffic_light_value == 6) && vTraffic == 0){
+    digitalWrite(PWM_PIN, LOW);
+    digitalWrite(RELE_PIN, LOW); 
+    delay(250);
+    digitalWrite(RELE_PIN, HIGH);   
     delay(5000);
-    traffic_light_value == vTraffic;
+    vTraffic = 1;
   } 
   
   if(line_vector_val > 0 && line_vector_val <= 11){latch_vozvrata = 1;}

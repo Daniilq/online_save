@@ -43,6 +43,7 @@ NewPing sonar(PING_PIN, PING_PIN, MAX_DISTANCE); // Настройка пино�
 
 #define MIN_MOTOR_SPEED 110   // минимальная скорость 
 #define MAX_MOTOR_SPEED 120  // максимальная скорость 
+#define ZEBRA_MOTOR_SPEED 100 // скорость на пешеходном переходе 
 
 #define TOTAL_SENSORS 11        // всего сенсоров
 
@@ -232,6 +233,7 @@ void babulka(){         // Датчик дальномера
 }
 
 
+
 int16_t latch_vozvrata = 0; 
 inline void vozvratNaTrasy(){
 
@@ -276,8 +278,39 @@ inline void integraciya(){
   return _skorost_ygla_povorota;
 }
 
+void znakStop(){ // знак стоп
+	roadTraffic();
+	if(traffic_light_value == 6 && sturman_run_state == 1){ // если пришел сигнал от знака
+    	digitalWrite(PWM_PIN, LOW); // тормозим машину 
+    	digitalWrite(RELE_PIN, LOW); // делаем резкий стоп реле
+    	delay(250);
+    	digitalWrite(RELE_PIN, HIGH);   // включаем реле 
+    	delay(5000); // ждем пять секунд 
+    	sturman_run_state = 0
+  }
+  while(1){
+  	roadTraffic();
+  	if(traffic_light_value != 6){break;}
+  }
+}
+
+void zebra(){ // знак пешеходного перехода 
+	roadTraffic();
+	if(traffic_light_value == 5 && sturman_run_state == 1){ // если пришел сигнал от знака 
+	    MAX_MOTOR_SPEED = ZEBRA_MOTOR_SPEED;	// уменшаем скорость на секунду 
+	    delay(1000);
+	    sturman_run_state = 0;
+	}
+	while(1){
+	roadTraffic();
+	if(traffic_light_value != 5){break;}
+	}
+}
+
 void sturman(){
   babulka();
+  znakStop();
+  zebra();
   roadTraffic(); // функция светофоров 
   if(traffic_light_value == 0 || traffic_light_value == 1 || traffic_light_value == 3 || traffic_light_value == 4){
     // резкий тормоз
@@ -307,6 +340,7 @@ void sturman(){
     }
   }
 }
+
 
 inline void voditelWithoutPID(){
   // babulka();
@@ -368,19 +402,9 @@ inline void voditelWithoutPID(){
   Serial.println(_required_motor_speed);
 }
 
-int16_t vTraffic = 0;
 inline void generalDriver(){
   lineCheck(); // функция считывания линии
-  voditelWithoutPID(); // функция езды
-
-  if((traffic_light_value == 5 || traffic_light_value == 6) && vTraffic == 0){
-    digitalWrite(PWM_PIN, LOW);
-    digitalWrite(RELE_PIN, LOW); 
-    delay(250);
-    digitalWrite(RELE_PIN, HIGH);   
-    delay(5000);
-    vTraffic = 1;
-  } 
+  voditelWithoutPID(); // функция езды 
   
   if(line_vector_val > 0 && line_vector_val <= 11){latch_vozvrata = 1;}
   else if(line_vector_val < 0 && line_vector_val <= -11 ){latch_vozvrata = -1;}
