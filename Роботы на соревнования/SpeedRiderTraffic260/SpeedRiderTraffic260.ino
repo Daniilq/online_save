@@ -42,8 +42,7 @@ NewPing sonar(PING_PIN, PING_PIN, MAX_DISTANCE); // Настройка пино�
 #define MAX_SERVO_ANGLE 31    //максимальный yгол поворот(по умолчанию 40)
 
 #define MIN_MOTOR_SPEED 110   // минимальная скорость 
-#define MAX_MOTOR_SPEED 120  // максимальная скорость 
-#define ZEBRA_MOTOR_SPEED 100 // скорость на пешеходном переходе 
+#define MAX_MOTOR_SPEED 120  // максимальная скорость  
 
 #define TOTAL_SENSORS 11        // всего сенсоров
 
@@ -191,13 +190,13 @@ inline void sensorFiltrator(){
 
 int16_t distanc;
 uint8_t distanceF(){
- delay(30); // Задержка в 30 миллисекунд между генерацией волн. 29 миллисекунд – минимально допустимая задержка.
+ // delay(30); // Задержка в 30 миллисекунд между генерацией волн. 29 миллисекунд – минимально допустимая задержка.
  unsigned int _echo_time = sonar.ping(); // Генерация сигнала, получение времени в микросекундах (_echo_time).
  distanc = _echo_time / US_ROUNDTRIP_CM;
 
- Serial.print("Distance: ");
- Serial.print(distanc); // Преобразование времени в расстояние и отображение результата (0 соответствует выходу за допустимый диапазон)
- Serial.println("cm");
+ // Serial.print("Distance: ");
+ // Serial.print(distanc); // Преобразование времени в расстояние и отображение результата (0 соответствует выходу за допустимый диапазон)
+ // Serial.println("cm");
 }
 
 bool sturman_run_state = 0;
@@ -225,9 +224,9 @@ void babulka(){         // Датчик дальномера
       digitalWrite(MOTORIN2_PIN, LOW);
       sturman_run_state = 0;
     }
-      while(1){
-        distanceF();
-        if(distanc >= 35 || distanc == 0){break;}
+   	while(1){
+   		distanceF();
+    	if(distanc >= 35 || distanc == 0){break;}
     }
   }    
 }
@@ -278,40 +277,41 @@ inline void integraciya(){
   return _skorost_ygla_povorota;
 }
 
+// if(millis() - timer_start_time_run >= _temp_timer_period) // пример таймера 
+
+uint32_t zstp_timer_start_time_run = 0;
 void znakStop(){ // знак стоп
-	roadTraffic();
-	if(traffic_light_value == 6 && sturman_run_state == 1){ // если пришел сигнал от знака
-    	digitalWrite(PWM_PIN, LOW); // тормозим машину 
-    	digitalWrite(RELE_PIN, LOW); // делаем резкий стоп реле
-    	delay(250);
-    	digitalWrite(RELE_PIN, HIGH);   // включаем реле 
-    	delay(5000); // ждем пять секунд 
-    	sturman_run_state = 0
-  }
-  while(1){
-  	roadTraffic();
-  	if(traffic_light_value != 6){break;}
-  }
+	if((millis() - zstp_timer_start_time_run >= 5000) || zstp_timer_start_time_run == 0) {
+		if(traffic_light_value == 6 /*&& sturman_run_state == 1*/){ // если пришел сигнал от знака
+	    	digitalWrite(PWM_PIN, LOW); // тормозим машину 
+	    	digitalWrite(RELE_PIN, LOW); // делаем резкий стоп реле
+	    	delay(250);
+	    	digitalWrite(RELE_PIN, HIGH);   // включаем реле 
+	    	delay(5000); // ждем пять секунд 
+	    	// sturman_run_state = 0;
+	    	zstp_timer_start_time_run = millis();
+	  	}
+	}
 }
 
+bool vnimanie_pewexod = 0;
 void zebra(){ // знак пешеходного перехода 
-	roadTraffic();
-	if(traffic_light_value == 5 && sturman_run_state == 1){ // если пришел сигнал от знака 
-	    MAX_MOTOR_SPEED = ZEBRA_MOTOR_SPEED;	// уменшаем скорость на секунду 
-	    delay(1000);
-	    sturman_run_state = 0;
-	}
-	while(1){
-	roadTraffic();
-	if(traffic_light_value != 5){break;}
+	if(traffic_light_value == 5){ // если пришел сигнал от знака 
+		vnimanie_pewexod = 1;
+		for(int i=0; i<100; i++){
+			analogWrite(PWM_PIN, MAX_MOTOR_SPEED / 2);			// уменшаем скорость на секунду 
+		    babulka();
+		    
+		}
 	}
 }
 
 void sturman(){
   babulka();
+  roadTraffic(); // функция светофоров 
   znakStop();
   zebra();
-  roadTraffic(); // функция светофоров 
+  // vTraffic = 1;
   if(traffic_light_value == 0 || traffic_light_value == 1 || traffic_light_value == 3 || traffic_light_value == 4){
     // резкий тормоз
     analogWrite(PWM_PIN, LOW);
