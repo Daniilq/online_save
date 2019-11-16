@@ -1,8 +1,0 @@
-{
-    "board@arduino": "Arduino/Genuino Mega or Mega 2560", 
-    "option_Processor@Arduino/Genuino Mega or Mega 2560": "ATmega2560 (Mega 2560)", 
-    "package": "Arduino IDE", 
-    "platform": "arduino", 
-    "programmer": "AVR ISP", 
-    "version": "avr"
-}
